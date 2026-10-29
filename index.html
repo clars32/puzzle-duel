@@ -7,7 +7,7 @@
 <!-- Home-screen app: icon, name, and opening full screen -->
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-512.png">
-<meta name="apple-mobile-web-app-title" content="Duel">
+<meta name="apple-mobile-web-app-title" content="Puzzle Duel">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -28,7 +28,7 @@ iframe{display:block;border:0;width:100%;height:100%}
 // The Google Apps Script scoreboard. If you ever make a NEW deployment, paste its URL here.
 const SCOREBOARD = 'https://script.google.com/macros/s/AKfycbzkAecGl9odla9_Ca5yHT2G484_rICHl0xRkGxzAFe1Dy4WnigMBupOi9q7KDskAb2N3g/exec';
 
-// The key comes from this page's own link (…/duel/?k=yourkey), so it never sits in the public repo.
+// The key comes from this page's own link (…/puzzle-duel/?k=yourkey), so it never sits in the public repo.
 function getKey() {
   const fromUrl = new URLSearchParams(location.search).get('k');
   try {
@@ -39,7 +39,7 @@ function getKey() {
 
 const key = getKey();
 if (!key) {
-  document.body.innerHTML = '<div class="msg"><p>Open Duel with your private link, the one ending in <code>?k=</code> and your key.</p></div>';
+  document.body.innerHTML = '<div class="msg"><p>Open Puzzle Duel with your private link, the one ending in <code>?k=</code> and your key.</p></div>';
 } else {
   const frame = document.createElement('iframe');
   frame.title = 'Puzzle Duel scoreboard';
