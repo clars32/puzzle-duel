@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Make the Connection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #000; --muted: #5a594e;
+    --tile: #efefe6; --tile-sel: #5a594e;
+    --yellow: #f9df6d; --green: #a0c35a; --blue: #b0c4ef; --purple: #ba81c5;
+    --gap: 8px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: #fff; }
+  body {
+    color: var(--ink);
+    font-family: 'Libre Franklin', 'Franklin Gothic Medium', Arial, sans-serif;
+    user-select: none; -webkit-user-select: none;
+  }
+  .topbar {
+    height: 54px; border-bottom: 1px solid #dcdcdc;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px 0 16px;
+  }
+  .topbar svg { width: 24px; height: 24px; display: block; }
+  .topbar .icons { display: flex; gap: 18px; }
+  main { max-width: 624px; margin: 0 auto; padding: 0 8px 32px; }
+  .prompt { text-align: center; font-size: 18px; font-weight: 400; margin: 24px 0 20px; letter-spacing: -.1px; }
+  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); }
+  .tile {
+    aspect-ratio: 1 / 1; width: 100%;
+    border-radius: 6px; background: var(--tile); color: #000;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    font-weight: 700; text-transform: uppercase; padding: 0 3px;
+    font-size: 16px; line-height: 1.12; cursor: pointer;
+    transition: background-color .1s, color .1s;
+    position: relative; overflow: hidden;
+  }
+  @media (min-width: 500px) { .tile { aspect-ratio: auto; height: 80px; font-size: 20px; } }
+  .tile.sel { background: var(--tile-sel); color: #fff; }
+  .tile.pressed { transform: scale(.94); }
+  .tile.jump { animation: jump .22s ease-out; }
+  @keyframes jump { 50% { transform: translateY(-6px); } }
+  .tile.shake { animation: shake .3s linear 2; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+  }
+  .solved {
+    grid-column: 1 / -1; border-radius: 6px; text-align: center;
+    min-height: calc((min(100vw, 624px) - 16px - 3 * var(--gap)) / 4);
+    display: flex; flex-direction: column; justify-content: center; padding: 6px 6px;
+    text-transform: uppercase; color: #000;
+  }
+  @media (min-width: 500px) { .solved { min-height: 80px; } }
+  .solved.new { animation: reveal .35s ease-out; }
+  @keyframes reveal { from { transform: scale(.94); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+  .solved .name { font-weight: 700; font-size: 17px; line-height: 1.2; }
+  .solved .members { font-weight: 400; font-size: 17px; line-height: 1.2; margin-top: 1px; }
+  .mistakes {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin: 22px 0 22px; font-size: 16px; color: var(--muted); font-weight: 400;
+  }
+  .dots { display: flex; gap: 10px; margin-left: 6px; }
+  .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--tile-sel); transition: transform .3s, opacity .3s; }
+  .dot.used { transform: scale(0); opacity: 0; }
+  .controls { display: flex; justify-content: center; gap: 10px; }
+  button {
+    font-family: inherit; font-weight: 600; font-size: 16px;
+    height: 48px; padding: 0 18px; border-radius: 999px;
+    background: #fff; color: #000; border: 1px solid #000; cursor: pointer;
+  }
+  button:disabled { color: #7f7f7f; border-color: #7f7f7f; cursor: default; }
+  button.submit:not(:disabled) { background: #000; color: #fff; }
+  .toast {
+    position: fixed; top: 92px; left: 50%; transform: translateX(-50%);
+    background: #000; color: #fff; padding: 12px 16px; border-radius: 4px;
+    font-weight: 600; font-size: 16px; opacity: 0; transition: opacity .2s; pointer-events: none;
+    z-index: 10;
+  }
+  .toast.show { opacity: 1; }
+  .finale { display: none; text-align: center; margin-top: 28px; }
+  .finale.show { display: block; animation: reveal .4s ease-out; }
+  .finale h2 { margin: 0 0 10px; font-size: 26px; font-weight: 800; }
+  .finale p { margin: 6px 12px; font-size: 18px; font-weight: 500; line-height: 1.4; }
+  .finale .small { font-size: 15px; color: var(--muted); font-weight: 400; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4 7 12l8 8"/></svg>
+  <div class="icons">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.2 9.2a2.9 2.9 0 1 1 4 2.7c-.8.4-1.2 1-1.2 1.8v.6" stroke-linecap="round"/><circle cx="12" cy="17.3" r=".6" fill="#000"/></svg>
+    <svg viewBox="0 0 24 24" fill="#000"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.7 7.7 0 0 0-1.7-1L14.9 3h-4l-.4 2.7a7.7 7.7 0 0 0-1.7 1l-2.5-1-2 3.5L6.4 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.7 7.7 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.7 7.7 0 0 0 1.7-1l2.5 1 2-3.5zM12.9 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-.9 0)"/></svg>
+  </div>
+</div>
+<main>
+  <div class="prompt" id="prompt">Create four groups of four!</div>
+  <div class="board" id="board"></div>
+  <div class="mistakes" id="mistakesRow">Mistakes Remaining: <span class="dots" id="dots"></span></div>
+  <div class="controls" id="controls">
+    <button id="shuffleBtn">Shuffle</button>
+    <button id="deselectBtn" disabled>Deselect All</button>
+    <button id="submitBtn" class="submit" disabled>Submit</button>
+  </div>
+  <div class="finale" id="finale">
+    <h2 id="finaleTitle"></h2>
+    <p id="finaleMsg"></p>
+    <p class="small" id="finaleSmall"></p>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======= EDIT THESE ======= */
+const CONFIG = {
+  title: "Make the Connection",
+  groups: [
+    { name: "Types of mutations", color: "yellow", words: ["NONSENSE", "SILENT", "POINT", "FRAMESHIFT"] },
+    { name: "In a dry lab", color: "green", words: ["MONITOR", "MOUSE", "CHAIR", "WHITEBOARD"] },
+    { name: "Lab ___", color: "blue", words: ["MEETING", "PARTNER", "RAT", "TECH"] },
+    { name: "Homophones of BYU STEM professors", color: "purple", words: ["PAIN", "POOL", "MON", "BAILING"] }
+  ],
+  mistakes: 4,
+  finaleTitle: "Perfect!",
+  finaleMessage: "You know where we spend our afternoons. Bring my ID card. You'll need it to get in. 💛",
+  finaleLostTitle: "Close enough!",
+  finaleSmall: "Your next clue is waiting there."
+};
+/* ========================== */
+
+const board = document.getElementById("board");
+const toastEl = document.getElementById("toast");
+document.title = CONFIG.title;
+
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const groupOf = w => CONFIG.groups.find(g => g.words.includes(w));
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+let remaining = shuffle(CONFIG.groups.flatMap(g => g.words));
+let solved = [], selected = [], mistakesLeft = CONFIG.mistakes, busy = false, justSolved = null;
+const guesses = new Set();
+
+function fit(el) {
+  // shrink long words so they fit on one line like the real tiles
+  el.style.fontSize = "";
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  const span = el.firstChild;
+  while (span.offsetWidth > el.clientWidth - 6 && size > 9) { size -= 0.5; el.style.fontSize = size + "px"; }
+}
+
+function render() {
+  board.innerHTML = "";
+  for (const g of solved) {
+    const d = document.createElement("div");
+    d.className = "solved" + (g === justSolved ? " new" : "");
+    d.style.background = `var(--${g.color})`;
+    d.innerHTML = `<div class="name"></div><div class="members"></div>`;
+    d.querySelector(".name").textContent = g.name;
+    d.querySelector(".members").textContent = g.words.join(", ");
+    board.appendChild(d);
+  }
+  for (const w of remaining) {
+    const t = document.createElement("div");
+    t.className = "tile" + (selected.includes(w) ? " sel" : "");
+    t.dataset.w = w;
+    const s = document.createElement("span");
+    s.textContent = w; s.style.whiteSpace = "nowrap";
+    t.appendChild(s);
+    t.addEventListener("pointerdown", () => t.classList.add("pressed"));
+    t.addEventListener("pointerup", () => t.classList.remove("pressed"));
+    t.addEventListener("pointerleave", () => t.classList.remove("pressed"));
+    t.addEventListener("click", () => toggle(w, t));
+    board.appendChild(t);
+  }
+  board.querySelectorAll(".tile").forEach(fit);
+  const dots = document.getElementById("dots");
+  dots.innerHTML = "";
+  for (let i = 0; i < CONFIG.mistakes; i++) {
+    const d = document.createElement("span");
+    d.className = "dot" + (i >= mistakesLeft ? " used" : "");
+    dots.appendChild(d);
+  }
+  updateButtons();
+}
+
+function updateButtons() {
+  document.getElementById("submitBtn").disabled = busy || selected.length !== 4;
+  document.getElementById("deselectBtn").disabled = busy || selected.length === 0;
+  document.getElementById("shuffleBtn").disabled = busy;
+}
+
+function toggle(w, el) {
+  if (busy) return;
+  if (selected.includes(w)) { selected = selected.filter(x => x !== w); el.classList.remove("sel"); }
+  else if (selected.length < 4) { selected.push(w); el.classList.add("sel"); }
+  updateButtons();
+}
+
+function toast(msg) {
+  toastEl.textContent = msg; toastEl.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => toastEl.classList.remove("show"), 1500);
+}
+
+function tileEl(w) { return board.querySelector(`.tile[data-w="${w}"]`); }
+
+// Animate tiles from old positions to new (FLIP)
+function animateReorder(update) {
+  const before = new Map();
+  board.querySelectorAll(".tile").forEach(t => before.set(t.dataset.w, t.getBoundingClientRect()));
+  update();
+  board.querySelectorAll(".tile").forEach(t => {
+    const b = before.get(t.dataset.w); if (!b) return;
+    const a = t.getBoundingClientRect();
+    const dx = b.left - a.left, dy = b.top - a.top;
+    if (!dx && !dy) return;
+    t.style.transition = "none";
+    t.style.transform = `translate(${dx}px, ${dy}px)`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      t.style.transition = "transform .35s ease-in-out";
+      t.style.transform = "";
+    }));
+  });
+}
+
+async function submit() {
+  if (busy || selected.length !== 4) return;
+  const key = selected.slice().sort().join("|");
+  if (guesses.has(key)) { toast("Already guessed!"); return; }
+  guesses.add(key);
+  busy = true; updateButtons();
+
+  // jump in board order, like the real game
+  const order = remaining.filter(w => selected.includes(w));
+  for (const w of order) {
+    const el = tileEl(w);
+    el.classList.remove("jump"); void el.offsetWidth; el.classList.add("jump");
+    await wait(100);
+  }
+  await wait(350);
+
+  const g = groupOf(selected[0]);
+  if (selected.every(w => groupOf(w) === g)) {
+    // slide the four tiles into the top open row, then turn them into the category bar
+    animateReorder(() => {
+      remaining = [...g.words.filter(w => remaining.includes(w)).sort((a, b) => remaining.indexOf(a) - remaining.indexOf(b)),
+                   ...remaining.filter(w => !g.words.includes(w))];
+      render();
+    });
+    await wait(500);
+    solved.push(g); justSolved = g;
+    remaining = remaining.filter(w => !g.words.includes(w));
+    selected = [];
+    busy = false;
+    render();
+    justSolved = null;
+    if (solved.length === CONFIG.groups.length) { await wait(500); finish(true); }
+  } else {
+    const counts = {};
+    selected.forEach(w => { const n = groupOf(w).name; counts[n] = (counts[n] || 0) + 1; });
+    if (Math.max(...Object.values(counts)) === 3) toast("One away...");
+    for (const w of selected) { const el = tileEl(w); el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
+    await wait(650);
+    mistakesLeft--;
+    busy = false;
+    const dots = document.querySelectorAll(".dot");
+    if (dots[mistakesLeft]) dots[mistakesLeft].classList.add("used");
+    board.querySelectorAll(".shake").forEach(el => el.classList.remove("shake"));
+    updateButtons();
+    if (mistakesLeft === 0) revealAll();
+  }
+}
+
+async function revealAll() {
+  busy = true; selected = []; render();
+  for (const g of CONFIG.groups.filter(g => !solved.includes(g))) {
+    await wait(700);
+    animateReorder(() => {
+      remaining = [...g.words, ...remaining.filter(w => !g.words.includes(w))];
+      render();
+    });
+    await wait(500);
+    solved.push(g); justSolved = g;
+    remaining = remaining.filter(w => !g.words.includes(w));
+    render(); justSolved = null;
+  }
+  await wait(500);
+  finish(false);
+}
+
+function finish(won) {
+  ["controls", "mistakesRow"].forEach(id => document.getElementById(id).style.display = "none");
+  document.getElementById("prompt").style.visibility = "hidden";
+  document.getElementById("finaleTitle").textContent = won ? CONFIG.finaleTitle : CONFIG.finaleLostTitle;
+  document.getElementById("finaleMsg").textContent = CONFIG.finaleMessage;
+  document.getElementById("finaleSmall").textContent = CONFIG.finaleSmall;
+  document.getElementById("finale").classList.add("show");
+  try { parent.postMessage({ type: "hunt-solved", game: "connections" }, "*"); } catch (e) {}
+}
+
+document.getElementById("shuffleBtn").addEventListener("click", () => {
+  if (busy) return;
+  animateReorder(() => { remaining = shuffle(remaining); render(); });
+});
+document.getElementById("deselectBtn").addEventListener("click", () => {
+  if (busy) return;
+  selected = [];
+  board.querySelectorAll(".tile.sel").forEach(t => t.classList.remove("sel"));
+  updateButtons();
+});
+document.getElementById("submitBtn").addEventListener("click", submit);
+window.addEventListener("resize", () => board.querySelectorAll(".tile").forEach(fit));
+if (document.fonts) document.fonts.ready.then(() => board.querySelectorAll(".tile").forEach(fit));
+render();
+</script>
+</body>
+</html>
