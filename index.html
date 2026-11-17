@@ -32,6 +32,7 @@ iframe{display:block;border:0;width:100%;height:100%}
 .views iframe{position:absolute;inset:0}
 .views iframe[hidden]{display:none}
 body.hunt-on .tabs{display:block}
+body.hunt-on.playing .tabs{display:none}
 </style>
 </head>
 <body>
@@ -64,15 +65,20 @@ const views = document.getElementById('views');
 if (!key) {
   views.innerHTML = '<div class="msg"><p>Open Puzzle Duel with your private link, the one ending in <code>?k=</code> and your key.</p></div>';
 } else {
-  const frame = document.createElement('iframe');
-  frame.title = 'Puzzle Duel scoreboard';
-  frame.src = SCOREBOARD + '?k=' + encodeURIComponent(key);
-  views.appendChild(frame);
-
   let hunt = null;
   const huntDue = () => params.get('hunt') === 'preview' || params.get('hunt') === 'reset' || Date.now() >= REVEAL_AT.getTime();
+  const boardSrc = SCOREBOARD + '?k=' + encodeURIComponent(key);
+  const frame = document.createElement('iframe');
+  frame.title = 'Puzzle Duel scoreboard';
+  // While the hunt is up, the scoreboard only loads once she taps its tab, so it isn't running in the background.
+  if (!huntDue()) frame.src = boardSrc;
+  views.appendChild(frame);
+  window.addEventListener('message', e => {
+    if (e.data && e.data.type === 'hunt-playing') document.body.classList.toggle('playing', !!e.data.on);
+  });
   function show(which) {
     const onHunt = which === 'hunt';
+    if (!onHunt && !frame.getAttribute('src')) frame.src = boardSrc;
     hunt.hidden = !onHunt; frame.hidden = onHunt;
     document.getElementById('tabHunt').setAttribute('aria-selected', onHunt);
     document.getElementById('tabBoard').setAttribute('aria-selected', !onHunt);
@@ -97,7 +103,7 @@ if (!key) {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { hiddenAt = Date.now(); return; }
     revealHunt();
-    if (hiddenAt && Date.now() - hiddenAt > 10 * 60 * 1000) frame.src = frame.src;
+    if (hiddenAt && Date.now() - hiddenAt > 10 * 60 * 1000 && frame.getAttribute('src')) frame.src = frame.src;
   });
 }
 </script>

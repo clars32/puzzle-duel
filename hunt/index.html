@@ -22,7 +22,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
-.wrap{max-width:620px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) max(48px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:28px}
+.wrap{max-width:620px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) max(48px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:32px}
 h1,h2{font-family:var(--display);margin:0;line-height:1.05;text-wrap:balance}
 h1{font-size:32px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
 h1 .vs{color:var(--muted);font-weight:500}
@@ -31,42 +31,41 @@ p{margin:0}
 button{font:inherit;color:inherit;cursor:pointer}
 .muted{color:var(--muted)}
 .top{display:flex;flex-direction:column;gap:14px}
-.day{font-family:var(--display);font-weight:600;font-size:24px;text-align:center;letter-spacing:.01em}
+.day{font-family:var(--display);font-weight:600;font-size:24px;text-align:center;letter-spacing:.01em;height:43px;display:flex;align-items:center;justify-content:center;margin-top:6px}
 
-.card{background:var(--surface);border:2px solid var(--line);border-radius:14px;overflow:hidden}
-.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;padding:18px 18px 14px}
-.side .name{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;padding:15px 16px 11px}
+.side .name{font-family:var(--display);font-weight:600;font-size:19px;line-height:1.1;letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .side.right{text-align:right}.side.right .name{justify-content:flex-end}
-.sq{width:16px;height:16px;border-radius:3px;display:inline-block}
-.big{font-family:var(--display);font-weight:700;font-size:64px;line-height:1;margin-top:8px}
-.pill{margin-top:34px;border:2px solid var(--good);color:var(--good);border-radius:999px;padding:3px 12px;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
-.status{border-top:2px solid var(--soft);padding:14px 18px;font-size:18px;line-height:1.45}
+.sq{width:12px;height:12px;border-radius:2px;display:inline-block}
+.big{font-family:var(--display);font-weight:700;font-size:56px;line-height:1;margin-top:6px}
+.pill{margin-top:20px;border:1.5px solid var(--good);color:var(--good);border-radius:999px;padding:0 9px;height:24px;display:flex;align-items:center;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.status{border-top:1.5px solid var(--soft);padding:16px;font-size:16px;line-height:1.4}
 .status b{font-weight:700}
 .status span{color:var(--muted)}
-.rows{border-top:2px solid var(--soft);padding:6px 18px 14px}
-.row{padding:12px 0}
-.row + .row{border-top:1px solid var(--soft)}
-.rhead{display:grid;grid-template-columns:1fr 132px;gap:12px;align-items:center}
-.rname{font-weight:600;font-size:19px;line-height:1.2}
-.rsub{color:var(--muted);font-size:15px;line-height:1.3;margin-top:2px}
-.tile{height:46px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;border:2px dashed var(--line);color:var(--muted);background:transparent;width:100%}
+.rows{border-top:1.5px solid var(--soft);padding:12px 16px 14px}
+.row{padding:4.5px 0}
+.rhead{display:grid;grid-template-columns:1fr 78px;gap:12px;align-items:center}
+.rname{font-weight:600;font-size:16px;line-height:1.2}
+.rsub{color:var(--muted);font-size:13px;line-height:1.25;margin-top:1px}
+.tile{height:44px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;border:2px dashed var(--line);color:var(--muted);background:transparent;width:100%}
 .tile.play{border:2px solid var(--line);color:var(--ink);background:var(--surface);box-shadow:0 1px 0 var(--line)}
 .tile.done{border:2px solid var(--p2);background:var(--p2);color:#121213}
-form.code{display:flex;gap:8px;margin-top:12px}
-form.code input{flex:1;min-width:0;height:44px;border:2px solid var(--line);border-radius:8px;padding:0 12px;font:600 17px var(--body);letter-spacing:.18em;text-transform:uppercase;background:var(--bg);color:var(--ink)}
+form.code{display:flex;gap:8px;margin:8px 0 6px}
+form.code input{flex:1;min-width:0;height:40px;border:2px solid var(--line);border-radius:6px;padding:0 12px;font:600 15px var(--body);letter-spacing:.18em;text-transform:uppercase;background:var(--bg);color:var(--ink)}
 form.code input:focus{outline:3px solid var(--p1-ink);outline-offset:1px}
 form.code.bad{animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-.btn{border:2px solid var(--line);background:var(--surface);border-radius:6px;padding:0 14px;height:44px;font-weight:600;font-size:15px;white-space:nowrap;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-.msg{margin-top:12px;background:var(--soft);border-radius:8px;padding:10px 12px;font-size:15px;line-height:1.45}
-.acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.acts .btn{flex:1;height:40px}
+.btn{border:2px solid var(--line);background:var(--surface);border-radius:6px;padding:0 12px;height:40px;font-weight:600;font-size:13px;white-space:nowrap;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.msg{margin-top:8px;background:var(--soft);border-radius:6px;padding:9px 12px;font-size:14px;line-height:1.4}
+.acts{display:flex;gap:8px;margin:8px 0 6px;flex-wrap:wrap}
+.acts .btn{flex:1;height:36px}
 .final{display:flex;flex-direction:column;gap:8px}
 .final p{font-size:17px;line-height:1.5}
 .hidden{display:none!important}
 .player{position:fixed;inset:0;background:#fff;display:none;flex-direction:column;z-index:10}
 .player.show{display:flex}
-.player .bar{height:48px;flex:0 0 auto;display:flex;align-items:center;padding:0 12px;background:var(--bg);border-bottom:2px solid var(--line)}
+.player .bar{height:calc(46px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);flex:0 0 auto;display:flex;align-items:center;padding-left:12px;padding-right:12px;background:var(--bg);border-bottom:2px solid var(--line)}
 .player .bar .btn{height:34px;font-size:14px}
 .player iframe{flex:1;border:0;width:100%}
 </style>
@@ -182,8 +181,10 @@ function render() {
   $("#final").classList.toggle("hidden", !done);
   $("#finalTitle").textContent = CONFIG.finalTitle; $("#finalMsg").textContent = CONFIG.finalMessage;
 }
-function open(s) { $("#frame").src = s.game; $("#player").classList.add("show"); }
-$("#backBtn").onclick = () => { $("#player").classList.remove("show"); $("#frame").src = "about:blank"; render(); };
+// Tell the Puzzle Duel page to hide its tab bar while a game is open, so the game gets the whole screen.
+const tellParent = on => { try { if (parent !== window) parent.postMessage({ type: "hunt-playing", on }, "*"); } catch (e) {} };
+function open(s) { $("#frame").src = s.game; $("#player").classList.add("show"); tellParent(true); }
+$("#backBtn").onclick = () => { $("#player").classList.remove("show"); $("#frame").src = "about:blank"; tellParent(false); render(); };
 window.addEventListener("message", e => {
   if (e.data && e.data.type === "hunt-solved" && !progress.solved.includes(e.data.game)) {
     progress.solved.push(e.data.game); store.set(progress); render();

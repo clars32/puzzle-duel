@@ -10,28 +10,28 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: #fff; }
   body { font-family: 'Libre Franklin', 'Helvetica Neue', Arial, sans-serif; color: var(--ink); user-select: none; -webkit-user-select: none; display: flex; flex-direction: column; align-items: center; }
-  header { width: 100%; height: 52px; border-bottom: 1px solid #dcdcdc; display: flex; align-items: center; justify-content: center; }
+  header { width: 100%; height: 44px; border-bottom: 1px solid #dcdcdc; display: flex; align-items: center; justify-content: center; }
   header h1 { margin: 0; font-size: 22px; font-weight: 800; }
-  main { width: min(100vw, 420px); padding: 14px 16px 24px; display: flex; flex-direction: column; align-items: center; }
+  main { width: min(100vw, 420px); padding: 10px 16px 16px; display: flex; flex-direction: column; align-items: center; }
   .themeCard { width: 100%; border: 1px solid #dcdcdc; border-radius: 8px; overflow: hidden; text-align: center; }
   .themeCard .lbl { background: var(--theme); font-size: 13px; font-weight: 600; padding: 7px 0; letter-spacing: .3px; }
-  .themeCard .clue { font-size: 20px; font-weight: 800; padding: 12px 8px 14px; }
-  .count { margin: 14px 0 4px; font-size: 16px; }
+  .themeCard .clue { font-size: 20px; font-weight: 800; padding: 9px 8px 11px; }
+  .count { margin: 10px 0 2px; font-size: 16px; }
   .count b { font-weight: 800; }
   .current { height: 34px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
   .current.bad { animation: shake .35s; color: #777; }
   .current.good { color: #2a8bb0; }
   .current.goodspan { color: #c79b00; }
   @keyframes shake { 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
-  .gridWrap { position: relative; width: 100%; max-width: 330px; aspect-ratio: 6 / 8; touch-action: none; margin-top: 4px; }
+  .gridWrap { position: relative; width: 300px; aspect-ratio: 6 / 8; touch-action: none; margin-top: 4px; }
   svg.lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .cell { position: absolute; width: calc(100% / 6); height: calc(100% / 8); display: flex; align-items: center; justify-content: center; }
-  .cell .c { width: 78%; aspect-ratio: 1/1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: clamp(20px, 6.4vw, 26px); font-weight: 500; text-transform: uppercase; position: relative; z-index: 1; transition: background .12s; }
+  .cell .c { width: 78%; aspect-ratio: 1/1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--lf, 24px); font-weight: 500; text-transform: uppercase; position: relative; z-index: 1; transition: background .12s; }
   .cell.sel .c { background: var(--sel); }
   .cell.theme .c { background: var(--theme); }
   .cell.span .c { background: var(--span); }
   .cell.hint .c { outline: 2px dashed #000; outline-offset: -2px; }
-  .controls { margin-top: 16px; }
+  .controls { margin-top: 12px; }
   button { font-family: inherit; font-weight: 600; font-size: 16px; height: 46px; padding: 0 22px; border-radius: 999px; background: #fff; color: #000; border: 1px solid #000; cursor: pointer; }
   button:disabled { color: #999; border-color: #bbb; }
   .overlay { position: fixed; inset: 0; background: rgba(255,255,255,.6); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 5; }
@@ -75,6 +75,8 @@ const CONFIG = {
   seed: 20261116
 };
 /* ========================== */
+// Precomputed layout for the words above (no crossings). If you change the words, it is rebuilt automatically.
+const LAYOUT = {"key": "THEBRANBURY|BONSAI,PANDEMIC,COOKING,SHERLOCK,SNUGGLES", "paths": {"THEBRANBURY": [[0, 0], [1, 0], [0, 1], [1, 2], [2, 2], [1, 1], [2, 1], [3, 2], [2, 3], [2, 4], [1, 5]], "BONSAI": [[0, 2], [1, 3], [0, 3], [1, 4], [0, 4], [0, 5]], "PANDEMIC": [[2, 0], [3, 1], [3, 0], [4, 0], [5, 0], [6, 0], [5, 1], [6, 2]], "SNUGGLES": [[3, 5], [4, 5], [5, 5], [6, 5], [5, 4], [4, 4], [3, 4], [2, 5]], "COOKING": [[6, 4], [5, 3], [4, 3], [5, 2], [4, 1], [4, 2], [3, 3]], "SHERLOCK": [[7, 5], [7, 4], [6, 3], [7, 3], [7, 2], [7, 1], [7, 0], [6, 1]]}};
 const COLS = 6, ROWS = 8;
 let seed = CONFIG.seed;
 const rand = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -84,90 +86,47 @@ const idx = (r, c) => r * COLS + c;
 const inb = (r, c) => r >= 0 && r < ROWS && c >= 0 && c < COLS;
 
 // Build a layout: spangram touches two opposite sides, theme words tile the rest.
+// No path may cross another path or itself (two diagonals through the same 2x2 square).
 function build() {
   const words = CONFIG.words.map(w => w.toUpperCase()), sp = CONFIG.spangram.toUpperCase();
   const total = sp.length + words.reduce((a, w) => a + w.length, 0);
   if (total !== COLS * ROWS) throw new Error(`Letters must total ${COLS * ROWS}; got ${total}`);
+  const dkey = (a, b) => { const x = idx(...a), y = idx(...b); return x < y ? x + "-" + y : y + "-" + x; };
   for (let attempt = 0; attempt < 4000; attempt++) {
     const owner = Array(COLS * ROWS).fill(-1);
-    const diag = new Set();               // diagonal edges used, to stop lines crossing
-    const crosses = (a, b) => {
-      const [r1, c1] = a, [r2, c2] = b;
-      if (r1 === r2 || c1 === c2) return false;
-      const k = [idx(r1, c2), idx(r2, c1)].sort((x, y) => x - y).join("-");
-      return diag.has(k);
-    };
-    const addDiag = (a, b) => { if (a[0] !== b[0] && a[1] !== b[1]) diag.add([idx(a[0], a[1]), idx(b[0], b[1])].sort((x, y) => x - y).join("-")); };
+    const diag = new Set();
+    // moving a -> b diagonally crosses an existing diagonal through the same square?
+    const crosses = (a, b) => a[0] !== b[0] && a[1] !== b[1] && diag.has(dkey([a[0], b[1]], [b[0], a[1]]));
+    const step = (a, b) => { if (a[0] !== b[0] && a[1] !== b[1]) { diag.add(dkey(a, b)); return true; } return false; };
     const paths = {};
-    // spangram
-    const spOk = (() => {
-      const tries = 300;
-      for (let t = 0; t < tries; t++) {
-        const useV = sp.length >= ROWS ? (sp.length >= COLS ? rand() < 0.5 : true) : false;
-        const start = useV ? [0, Math.floor(rand() * COLS)] : [Math.floor(rand() * ROWS), 0];
-        const path = [start]; const used = new Set([idx(...start)]);
-        const ok = (function walk() {
-          if (path.length === sp.length) {
-            return path.some(p => useV ? p[0] === ROWS - 1 : p[1] === COLS - 1);
-          }
-          const [r, c] = path[path.length - 1];
-          for (const [dr, dc] of shuf(DIRS.slice())) {
-            const nr = r + dr, nc = c + dc;
-            if (!inb(nr, nc) || used.has(idx(nr, nc))) continue;
-            // keep moving toward the far side often enough to reach it
-            const remaining = sp.length - path.length;
-            const dist = useV ? ROWS - 1 - nr : COLS - 1 - nc;
-            if (dist > remaining - 1) continue;
-            path.push([nr, nc]); used.add(idx(nr, nc));
-            if (walk()) return true;
-            path.pop(); used.delete(idx(nr, nc));
-          }
-          return false;
-        })();
-        if (ok) { path.forEach(([r, c], i) => { owner[idx(r, c)] = 99; if (i) addDiag(path[i - 1], path[i]); }); paths[sp] = path; return true; }
+
+    // --- spangram ---
+    const useV = sp.length >= ROWS ? (sp.length >= COLS ? rand() < 0.5 : true) : false;
+    if (!useV && sp.length < COLS) throw new Error("Spangram too short");
+    const start = useV ? [0, Math.floor(rand() * COLS)] : [Math.floor(rand() * ROWS), 0];
+    const path = [start]; owner[idx(...start)] = 99;
+    let budget = 20000;
+    const walk = () => {
+      if (--budget < 0) return false;
+      if (path.length === sp.length) return path.some(p => useV ? p[0] === ROWS - 1 : p[1] === COLS - 1);
+      const [r, c] = path[path.length - 1];
+      for (const [dr, dc] of shuf(DIRS.slice())) {
+        const nr = r + dr, nc = c + dc;
+        if (!inb(nr, nc) || owner[idx(nr, nc)] !== -1 || crosses([r, c], [nr, nc])) continue;
+        const dist = useV ? ROWS - 1 - nr : COLS - 1 - nc;
+        if (dist > sp.length - path.length - 1) continue;
+        owner[idx(nr, nc)] = 99; path.push([nr, nc]); const d = step([r, c], [nr, nc]);
+        if (walk()) return true;
+        path.pop(); owner[idx(nr, nc)] = -1; if (d) diag.delete(dkey([r, c], [nr, nc]));
       }
       return false;
-    })();
-    if (!spOk) continue;
-    // theme words: always grow from the first empty cell so no holes are left behind
+    };
+    if (!walk()) continue;
+    paths[sp] = path.slice();
+
+    // --- theme words: always grow from the first empty cell so no holes are left behind ---
     const left = shuf(words.slice());
     let steps = 0;
-    const fill = () => {
-      if (++steps > 20000) return false;
-      const first = owner.indexOf(-1);
-      if (first === -1) return left.length === 0;
-      if (!regionsOk()) return false;
-      for (let wi = 0; wi < left.length; wi++) {
-        const w = left[wi];
-        const start = [Math.floor(first / COLS), first % COLS];
-        const path = [start]; owner[first] = 1;
-        const grow = () => {
-          if (path.length === w.length) {
-            left.splice(wi, 1);
-            const added = [];
-            for (let i = 1; i < path.length; i++) { if (path[i - 1][0] !== path[i][0] && path[i - 1][1] !== path[i][1]) { const k = [idx(...path[i - 1]), idx(...path[i])].sort((x, y) => x - y).join("-"); diag.add(k); added.push(k); } }
-            const flip = rand() < 0.5;
-            paths[w] = flip ? path.slice().reverse() : path.slice();
-            if (fill()) return true;
-            delete paths[w]; added.forEach(k => diag.delete(k));
-            left.splice(wi, 0, w);
-            return false;
-          }
-          const [r, c] = path[path.length - 1];
-          for (const [dr, dc] of shuf(DIRS.slice())) {
-            const nr = r + dr, nc = c + dc;
-            if (!inb(nr, nc) || owner[idx(nr, nc)] !== -1 || crosses([r, c], [nr, nc])) continue;
-            owner[idx(nr, nc)] = 1; path.push([nr, nc]);
-            if (grow()) return true;
-            path.pop(); owner[idx(nr, nc)] = -1;
-          }
-          return false;
-        };
-        if (grow()) return true;
-        owner[first] = -1;
-      }
-      return false;
-    };
     const regionsOk = () => {
       const seen = new Set(), lens = left.map(w => w.length), min = Math.min(...lens);
       for (let i = 0; i < owner.length; i++) {
@@ -176,11 +135,42 @@ function build() {
         while (st.length) { const k = st.pop(); size++; const r = Math.floor(k / COLS), c = k % COLS;
           for (const [dr, dc] of DIRS) { const nr = r + dr, nc = c + dc; if (inb(nr, nc) && owner[idx(nr, nc)] === -1 && !seen.has(idx(nr, nc))) { seen.add(idx(nr, nc)); st.push(idx(nr, nc)); } } }
         if (size < min) return false;
-        // region must be a sum of some remaining word lengths
         const can = new Set([0]); for (const L of lens) for (const v of [...can]) can.add(v + L);
         if (!can.has(size)) return false;
       }
       return true;
+    };
+    const fill = () => {
+      if (++steps > 30000) return false;
+      const first = owner.indexOf(-1);
+      if (first === -1) return left.length === 0;
+      if (!regionsOk()) return false;
+      for (let wi = 0; wi < left.length; wi++) {
+        const w = left[wi];
+        const p0 = [Math.floor(first / COLS), first % COLS];
+        const wp = [p0]; owner[first] = 1;
+        const grow = () => {
+          if (wp.length === w.length) {
+            left.splice(wi, 1);
+            paths[w] = rand() < 0.5 ? wp.slice().reverse() : wp.slice();
+            if (fill()) return true;
+            delete paths[w]; left.splice(wi, 0, w);
+            return false;
+          }
+          const [r, c] = wp[wp.length - 1];
+          for (const [dr, dc] of shuf(DIRS.slice())) {
+            const nr = r + dr, nc = c + dc;
+            if (!inb(nr, nc) || owner[idx(nr, nc)] !== -1 || crosses([r, c], [nr, nc])) continue;
+            owner[idx(nr, nc)] = 1; wp.push([nr, nc]); const d = step([r, c], [nr, nc]);
+            if (grow()) return true;
+            wp.pop(); owner[idx(nr, nc)] = -1; if (d) diag.delete(dkey([r, c], [nr, nc]));
+          }
+          return false;
+        };
+        if (grow()) return true;
+        owner[first] = -1;
+      }
+      return false;
     };
     if (!fill()) continue;
     const letters = Array(COLS * ROWS).fill("");
@@ -191,10 +181,29 @@ function build() {
 }
 
 if (typeof document !== "undefined") {
-  const { letters, paths, sp, words } = build();
+  const { letters, paths, sp, words } = (() => {
+    const sp = CONFIG.spangram.toUpperCase(), words = CONFIG.words.map(w => w.toUpperCase());
+    if (LAYOUT && LAYOUT.key === CONFIG.spangram + "|" + CONFIG.words.join(",")) {
+      const letters = Array(COLS * ROWS).fill("");
+      for (const [w, p] of Object.entries(LAYOUT.paths)) p.forEach(([r, c], i) => letters[idx(r, c)] = w[i]);
+      return { letters, paths: LAYOUT.paths, sp, words };
+    }
+    return build();
+  })();
   document.getElementById("title").textContent = CONFIG.title;
   document.getElementById("clue").textContent = CONFIG.theme;
   const grid = document.getElementById("grid"), svg = document.getElementById("lines");
+  // Fit the board to the screen: as wide as possible, but short enough that the Hint button stays visible.
+  function fitGrid() {
+    const top = grid.getBoundingClientRect().top + window.scrollY;
+    const avail = window.innerHeight - top - 76;            // room for the Hint button
+    const maxW = Math.min(330, document.querySelector("main").clientWidth - 32);
+    const w = Math.max(220, Math.min(maxW, Math.floor(avail * COLS / ROWS)));
+    grid.style.width = w + "px";
+    document.documentElement.style.setProperty("--lf", Math.round(w / COLS * 0.46) + "px");
+    gridRect = null;
+  }
+  window.addEventListener("resize", fitGrid);
   const cells = [];
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
     const d = document.createElement("div"); d.className = "cell";
@@ -216,20 +225,33 @@ if (typeof document !== "undefined") {
     pl.setAttribute("vector-effect", "non-scaling-stroke");
     pl.style.strokeWidth = "10px";
     if (cls) pl.classList.add(cls);
-    svg.appendChild(pl);
+    svg.insertBefore(pl, selLine || null);
   }
-  const clearSel = () => { svg.querySelectorAll(".selline").forEach(e => e.remove()); cells.forEach(c => c.classList.remove("sel")); };
+  const clearSel = () => { if (selLine) selLine.setAttribute("points", ""); for (const k of selCells) cells[k].classList.remove("sel"); selCells = new Set(); };
 
   let sel = [], dragging = false, moved = false;
   const cur = document.getElementById("current");
+  let selLine = null, selCells = new Set();
   const showSel = () => {
-    clearSel();
-    sel.forEach(([r, c]) => cells[idx(r, c)].classList.add("sel"));
-    drawLine(sel, "#dbd8c5", "selline");
+    // update only what changed: the highlighted circles and one reusable line
+    const now = new Set(sel.map(p => idx(...p)));
+    for (const k of selCells) if (!now.has(k)) cells[k].classList.remove("sel");
+    for (const k of now) if (!selCells.has(k)) cells[k].classList.add("sel");
+    selCells = now;
+    if (!selLine) {
+      selLine = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      selLine.setAttribute("fill", "none"); selLine.setAttribute("stroke", "#dbd8c5");
+      selLine.setAttribute("stroke-linecap", "round"); selLine.setAttribute("stroke-linejoin", "round");
+      selLine.setAttribute("vector-effect", "non-scaling-stroke"); selLine.style.strokeWidth = "10px";
+      svg.appendChild(selLine);
+    }
+    selLine.setAttribute("points", sel.length > 1 ? sel.map(p => center(p).join(",")).join(" ") : "");
     cur.className = "current"; cur.textContent = sel.map(([r, c]) => letters[idx(r, c)]).join("");
   };
+  let gridRect = null;
+  fitGrid();
   const cellFrom = (x, y, strict) => {
-    const b = grid.getBoundingClientRect();
+    const b = gridRect || grid.getBoundingClientRect();
     const fx = (x - b.left) / b.width * COLS, fy = (y - b.top) / b.height * ROWS;
     const r = Math.floor(fy), c = Math.floor(fx);
     if (!inb(r, c)) return null;
@@ -241,6 +263,7 @@ if (typeof document !== "undefined") {
   const same = (a, b) => a && b && a[0] === b[0] && a[1] === b[1];
 
   grid.addEventListener("pointerdown", e => {
+    gridRect = grid.getBoundingClientRect();
     const p = cellFrom(e.clientX, e.clientY, false); if (!p || isFound(p)) return;
     grid.setPointerCapture(e.pointerId);
     dragging = true; moved = false;

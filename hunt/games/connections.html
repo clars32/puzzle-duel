@@ -37,7 +37,7 @@
     font-weight: 700; text-transform: uppercase; padding: 0 3px;
     font-size: 16px; line-height: 1.12; cursor: pointer;
     transition: background-color .1s, color .1s;
-    position: relative; overflow: hidden;
+    position: relative; overflow: hidden; backface-visibility: hidden; touch-action: manipulation;
   }
   @media (min-width: 500px) { .tile { aspect-ratio: auto; height: 80px; font-size: 20px; } }
   .tile.sel { background: var(--tile-sel); color: #fff; }
@@ -143,12 +143,18 @@ let remaining = shuffle(CONFIG.groups.flatMap(g => g.words));
 let solved = [], selected = [], mistakesLeft = CONFIG.mistakes, busy = false, justSolved = null;
 const guesses = new Set();
 
+// Shrink long words so they fit on one line like the real tiles.
+// Sizes are measured once per word (and again only if the screen width changes), not on every redraw.
+const fitCache = new Map(); let fitWidth = 0;
 function fit(el) {
-  // shrink long words so they fit on one line like the real tiles
+  const w = el.dataset.w;
+  if (el.clientWidth !== fitWidth) { fitCache.clear(); fitWidth = el.clientWidth; }
+  if (fitCache.has(w)) { el.style.fontSize = fitCache.get(w); return; }
   el.style.fontSize = "";
   let size = parseFloat(getComputedStyle(el).fontSize);
   const span = el.firstChild;
   while (span.offsetWidth > el.clientWidth - 6 && size > 9) { size -= 0.5; el.style.fontSize = size + "px"; }
+  fitCache.set(w, el.style.fontSize);
 }
 
 function render() {

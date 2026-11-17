@@ -10,14 +10,14 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; background: #fff; }
   body { font-family: 'Libre Franklin', 'Helvetica Neue', Arial, sans-serif; color: #000; display: flex; flex-direction: column; height: 100%; user-select: none; -webkit-user-select: none; }
-  header { height: 52px; border-bottom: 1px solid #d3d6da; display: flex; align-items: center; justify-content: center; position: relative; flex: 0 0 auto; }
-  header h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: .2px; }
-  .boardWrap { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 10px; }
-  .board { display: grid; grid-template-rows: repeat(6, 1fr); gap: 5px; width: min(92vw, 380px); }
-  .row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+  header { height: 44px; border-bottom: 1px solid #d3d6da; display: flex; align-items: center; justify-content: center; position: relative; flex: 0 0 auto; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: .2px; }
+  .boardWrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 8px 10px; }
+  .board { display: grid; grid-template-rows: repeat(6, 1fr); gap: 5px; width: 300px; height: 300px; }
+  .row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; min-height: 0; }
   .row.shake { animation: shake .5s; }
   @keyframes shake { 10%,90%{transform:translateX(-1px)} 20%,80%{transform:translateX(2px)} 30%,50%,70%{transform:translateX(-4px)} 40%,60%{transform:translateX(4px)} }
-  .tile { aspect-ratio: 1/1; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: clamp(22px, 7vw, 30px); font-weight: 700; text-transform: uppercase; }
+  .tile { border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: var(--fs, 28px); min-height: 0; backface-visibility: hidden; font-weight: 700; text-transform: uppercase; }
   .tile.filled { border-color: var(--filled); animation: popIn .1s; }
   @keyframes popIn { 0%{transform:scale(.8);opacity:0} 40%{transform:scale(1.1);opacity:1} }
   .tile.flip { animation: flip .5s ease-in; }
@@ -27,10 +27,10 @@
   .tile.absent { background: var(--gray); border-color: var(--gray); color: #fff; }
   .tile.bounce { animation: bounce .8s; }
   @keyframes bounce { 0%,20%{transform:translateY(0)} 40%{transform:translateY(-30px)} 50%{transform:translateY(5px)} 60%{transform:translateY(-15px)} 80%{transform:translateY(2px)} 100%{transform:translateY(0)} }
-  .keyboard { flex: 0 0 auto; padding: 0 8px 14px; width: 100%; max-width: 500px; margin: 0 auto; }
+  .keyboard { flex: 0 0 auto; padding: 0 8px max(10px, env(safe-area-inset-bottom)); touch-action: manipulation; width: 100%; max-width: 500px; margin: 0 auto; }
   .krow { display: flex; gap: 6px; margin-bottom: 8px; justify-content: center; }
   .krow .spacer { flex: .5; }
-  .key { flex: 1; height: 58px; border: none; border-radius: 4px; background: var(--key); font-family: inherit; font-weight: 700; font-size: 13px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; padding: 0; color: #000; cursor: pointer; }
+  .key { flex: 1; height: var(--kh, 58px); border: none; border-radius: 4px; background: var(--key); font-family: inherit; font-weight: 700; font-size: 13px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; padding: 0; color: #000; cursor: pointer; }
   .key.wide { flex: 1.5; font-size: 12px; }
   .key.correct { background: var(--green); color: #fff; }
   .key.present { background: var(--yellow); color: #fff; }
@@ -82,6 +82,20 @@ for (let r = 0; r < ROWS; r++) {
   for (let c = 0; c < L; c++) { const t = document.createElement("div"); t.className = "tile"; row.appendChild(t); tiles.push(t); }
   board.appendChild(row); rows.push({ row, tiles });
 }
+function fitBoard() {
+  const H = window.innerHeight;
+  // shorter keys on short screens
+  document.documentElement.style.setProperty("--kh", (H < 640 ? 48 : H < 720 ? 52 : 58) + "px");
+  const wrap = document.querySelector(".boardWrap"), cs = getComputedStyle(wrap);
+  const w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const h = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  // tiles are square: width per tile vs height per tile
+  const tile = Math.floor(Math.min((w - 5 * (L - 1)) / L, (h - 5 * (ROWS - 1)) / ROWS, 62));
+  board.style.width = (tile * L + 5 * (L - 1)) + "px";
+  board.style.height = (tile * ROWS + 5 * (ROWS - 1)) + "px";
+  document.documentElement.style.setProperty("--fs", Math.round(tile * 0.5) + "px");
+}
+window.addEventListener("resize", fitBoard);
 const KEYS = ["QWERTYUIOP", "ASDFGHJKL", "ENTER ZXCVBNM BACK"];
 const keyEls = {};
 const kb = document.getElementById("keyboard");
@@ -99,6 +113,7 @@ KEYS.forEach((line, i) => {
   if (i === 1) r.appendChild(Object.assign(document.createElement("div"), { className: "spacer" }));
   kb.appendChild(r);
 });
+fitBoard(); requestAnimationFrame(fitBoard);
 let cur = 0, guess = "", busy = false, done = false;
 function toast(m, ms = 1300) { const t = document.getElementById("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), ms); }
 function draw() { rows[cur].tiles.forEach((t, i) => { t.textContent = guess[i] || ""; t.classList.toggle("filled", !!guess[i]); }); }
