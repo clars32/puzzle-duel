@@ -37,7 +37,7 @@ body.hunt-on.playing .tabs{display:none}
 </head>
 <body>
 <div class="tabs" id="tabs"><div class="seg" role="tablist">
-  <button role="tab" id="tabHunt" aria-selected="true">💛 For Alysson</button>
+  <button role="tab" id="tabHunt" aria-selected="true">💕 For Alysson</button>
   <button role="tab" id="tabBoard" aria-selected="false">Scoreboard</button>
 </div></div>
 <div class="views" id="views"></div>
@@ -86,7 +86,7 @@ if (!key) {
   function revealHunt() {
     if (hunt || !huntDue()) return;
     hunt = document.createElement('iframe');
-    hunt.title = 'Our little adventure';
+    hunt.title = 'Alysson\'s Adventure';
     hunt.src = 'hunt/index.html';
     views.appendChild(hunt);
     document.body.classList.add('hunt-on');

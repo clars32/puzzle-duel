@@ -94,19 +94,19 @@ form.code.bad{animation:shake .35s}
 <script>
 /* ======= EDIT THESE ======= */
 const CONFIG = {
-  intro: "Something is waiting for you at the end of today.",
-  howTo: "At each stop you'll be handed something with a code on it. Enter it to unlock your next puzzle.",
+  intro: "You want that safe key, don't you?",
+  howTo: "Each clue has a code. Enter it to unlock your next puzzle.",
   stops: [
-    { id: "connections", code: "SPARK", name: "Make the Connection", sub: "four groups of four", game: "games/connections.html",
+    { id: "connections", code: "SPARK", name: "Connections", sub: "Create four groups of four!", game: "games/connections.html",
       locked: "Enter the code from the first thing you were handed.",
-      solvedMsg: "You know where we spend our afternoons. Bring my ID card. You'll need it to get in." },
-    { id: "wordle", code: "FORCE", name: "Six Letters", sub: "six guesses", game: "games/wordle.html",
+      solvedMsg: "Maybe this ID card is more of a key than a clue..." },
+    { id: "wordle", code: "PICCOLO", name: "Wordle", sub: "Oh no, this one has six letters...", game: "games/wordle.html",
       locked: "Enter the code from what you found at the lab.",
-      solvedMsg: "Thirsty? You know where to go. Someone's waiting in the parking lot with your usual." },
-    { id: "strands", code: "FIZZ", name: "Threads", sub: "find the theme words", game: "games/strands.html",
+      solvedMsg: "Thirsty? Catch a ride! Leave the LSB and look for a familiar face by the duck pond..." },
+    { id: "strands", code: "RASPBERRY", name: "Strands", sub: "Find the theme words!", game: "games/strands.html",
       locked: "Enter the code from what you got with your drink.",
-      solvedMsg: "Head to my place. Someone there has something cozy for you." },
-    { id: "wordsearch", code: "COZY", name: "Little Word Hunt", sub: "one word at a time", game: "games/wordsearch.html",
+      solvedMsg: "The irony - you probably actually hope someone's at the apartment this time..." },
+    { id: "wordsearch", code: "COZY", name: "One Word Search", sub: "Might be tough to beat a minte on this one...", game: "games/wordsearch.html",
       locked: "Enter the code from what you picked up at my place.",
       solvedMsg: "Remember when we laid under a tree all night and fell in love?",
       directions: { lat: 40.294619, lng: -111.663715, label: "Riverview Park" } }
