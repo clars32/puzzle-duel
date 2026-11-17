@@ -68,6 +68,20 @@ form.code.bad{animation:shake .35s}
 .player .bar{height:calc(46px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);flex:0 0 auto;display:flex;align-items:center;padding-left:12px;padding-right:12px;background:var(--bg);border-bottom:2px solid var(--line)}
 .player .bar .btn{height:34px;font-size:14px}
 .player iframe{flex:1;border:0;width:100%}
+.page{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:11}
+.page.show{display:flex;animation:rise .35s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.page .bar{height:calc(46px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 12px 0;flex:0 0 auto;display:flex;align-items:center;background:var(--bg);border-bottom:2px solid var(--line)}
+.page .bar .btn{height:34px;font-size:14px}
+.page .body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.page .inner{max-width:620px;margin:0 auto;padding:24px 16px max(40px,env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:20px}
+.page h1{font-size:34px}
+.page .lead{font-size:17px;line-height:1.5;color:var(--muted)}
+.page .lead b{color:var(--ink)}
+.steps{list-style:none;margin:0;padding:0;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
+.steps li{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start;padding:14px 16px;font-size:17px;line-height:1.4}
+.steps li + li{border-top:1.5px solid var(--soft)}
+.steps .n{width:32px;height:32px;border-radius:6px;background:var(--p2);color:#121213;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:20px}
 </style>
 </head>
 <body>
@@ -86,6 +100,14 @@ form.code.bad{animation:shake .35s}
     <div class="rows" id="rows"></div>
   </div>
   <div class="final hidden" id="final"><h2 id="finalTitle"></h2><p id="finalMsg"></p></div>
+</div>
+<div class="page" id="page">
+  <div class="bar"><button class="btn" id="pageBack">‹ All stops</button></div>
+  <div class="body"><div class="inner">
+    <h1 id="pageTitle"></h1>
+    <p class="lead" id="pageIntro"></p>
+    <ol class="steps" id="pageSteps"></ol>
+  </div></div>
 </div>
 <div class="player" id="player">
   <div class="bar"><button class="btn" id="backBtn">‹ All stops</button></div>
@@ -109,10 +131,23 @@ const CONFIG = {
     { id: "wordsearch", code: "COZY", name: "One Word Search", sub: "Might be tough to beat a minte on this one...", game: "games/wordsearch.html",
       locked: "Enter the code from what you picked up at my place.",
       solvedMsg: "Remember when we laid under a tree all night and fell in love?",
-      directions: { lat: 40.294619, lng: -111.663715, label: "Riverview Park" } }
+      directions: { lat: 40.294619, lng: -111.663715, label: "Riverview Park" } },
+    // Final stop: no game. Its code opens the instructions page below.
+    { id: "final", code: "FOREVER", name: "Final stop", sub: "Your instructions", page: true,
+      locked: "Enter the code you found at the park." }
   ],
-  finalTitle: "Almost there…",
-  finalMessage: "Find what's waiting at our tree. Then keep an eye on my location. 💛"
+  finalPage: {
+    title: "Congratulations! You beat the game!",
+    intro: "The next stop is the final one. Ensure you are prepared before proceeding.",
+    steps: [
+      "When you arrive, you will be dropped off in the parking garage.",
+      "From the basement, enter the pavilion.",
+      "Go up the spiral stairs inside the pavilion.",
+      "Once you reach the ground floor, exit the pavilion through the main, center doors (the ones where the Christus reflects)."
+    ]
+  },
+  finalTitle: "What's next?",
+  finalMessage: "???"
 };
 /* ========================== */
 const store = {
@@ -125,13 +160,15 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 $("#day").textContent = "Today · " + new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 
 function render() {
-  const total = CONFIG.stops.length, solvedN = CONFIG.stops.filter(s => progress.solved.includes(s.id)).length;
+  const games = CONFIG.stops.filter(s => s.game);
+  const total = games.length, solvedN = games.filter(s => progress.solved.includes(s.id)).length;
   $("#nSolved").textContent = solvedN; $("#nLeft").textContent = total - solvedN;
   $("#pill").textContent = solvedN === total ? "Done" : "Live";
   const st = $("#status"); st.innerHTML = "";
   if (solvedN === 0) { st.append(el("b", null, CONFIG.intro + " ")); st.append(el("span", null, CONFIG.howTo)); }
   else if (solvedN < total) { st.append(el("b", null, `${solvedN} down, ${total - solvedN} to go. `)); st.append(el("span", null, "Head to your next stop for its code.")); }
-  else { st.append(el("b", null, "All four solved. ")); st.append(el("span", null, "One last thing is waiting for you.")); }
+  else if (!progress.unlocked.includes("final")) { st.append(el("b", null, "All four solved. ")); st.append(el("span", null, "One last thing is waiting for you.")); }
+  else { st.append(el("b", null, "You beat the game! ")); st.append(el("span", null, "Your instructions for the final stop are below.")); }
 
   const rows = $("#rows"); rows.innerHTML = "";
   CONFIG.stops.forEach((s, i) => {
@@ -139,8 +176,9 @@ function render() {
     const reachable = i === 0 || progress.solved.includes(CONFIG.stops[i - 1].id);
     const row = el("div", "row"), head = el("div", "rhead"), left = el("div");
     left.append(el("div", "rname", unlocked ? s.name : `Stop ${i + 1}`));
-    left.append(el("div", "rsub", solved ? "solved" : unlocked ? s.sub : reachable ? s.locked : "locked"));
-    const tile = el("button", "tile", solved ? "✓" : unlocked ? "Play" : "—");
+    left.append(el("div", "rsub", solved && !s.page ? "solved" : unlocked ? s.sub : reachable ? s.locked : "locked"));
+    const tile = el("button", "tile", s.page ? (unlocked ? "Open" : "—") : solved ? "✓" : unlocked ? "Play" : "—");
+    if (s.page && unlocked) tile.classList.add("done");
     if (unlocked && !solved) tile.classList.add("play");
     if (solved) tile.classList.add("done");
     if (unlocked) tile.onclick = () => open(s); else tile.disabled = true;
@@ -158,7 +196,7 @@ function render() {
       });
       row.append(f);
     }
-    if (solved) {
+    if (solved && !s.page) {
       row.append(el("div", "msg", s.solvedMsg));
       const acts = el("div", "acts");
       const again = el("button", "btn", "Play again"); again.onclick = () => open(s); acts.append(again);
@@ -183,7 +221,21 @@ function render() {
 }
 // Tell the Puzzle Duel page to hide its tab bar while a game is open, so the game gets the whole screen.
 const tellParent = on => { try { if (parent !== window) parent.postMessage({ type: "hunt-playing", on }, "*"); } catch (e) {} };
-function open(s) { $("#frame").src = s.game; $("#player").classList.add("show"); tellParent(true); }
+function open(s) {
+  if (s.page) return openPage();
+  $("#frame").src = s.game; $("#player").classList.add("show"); tellParent(true);
+}
+function openPage() {
+  const f = CONFIG.finalPage;
+  if (!progress.solved.includes("final")) { progress.solved.push("final"); store.set(progress); }
+  $("#pageTitle").textContent = f.title;
+  $("#pageIntro").innerHTML = "";
+  $("#pageIntro").append(el("b", null, f.intro));
+  const ol = $("#pageSteps"); ol.innerHTML = "";
+  f.steps.forEach((t, i) => { const li = el("li"); li.append(el("span", "n", i + 1), el("span", null, t)); ol.append(li); });
+  $("#page").classList.add("show"); tellParent(true);
+}
+$("#pageBack").onclick = () => { $("#page").classList.remove("show"); tellParent(false); render(); };
 $("#backBtn").onclick = () => { $("#player").classList.remove("show"); $("#frame").src = "about:blank"; tellParent(false); render(); };
 window.addEventListener("message", e => {
   if (e.data && e.data.type === "hunt-solved" && !progress.solved.includes(e.data.game)) {
