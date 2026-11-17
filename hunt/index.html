@@ -146,8 +146,8 @@ const CONFIG = {
       "Once you reach the ground floor, exit the pavilion through the main, center doors (the ones where the Christus reflects)."
     ]
   },
-  finalTitle: "What's next?",
-  finalMessage: "???"
+  finalTitle: "Almost there…",
+  finalMessage: "Find what's waiting at our tree. Then keep an eye on my location. 💛"
 };
 /* ========================== */
 const store = {
@@ -223,7 +223,8 @@ function render() {
 const tellParent = on => { try { if (parent !== window) parent.postMessage({ type: "hunt-playing", on }, "*"); } catch (e) {} };
 function open(s) {
   if (s.page) return openPage();
-  $("#frame").src = s.game; $("#player").classList.add("show"); tellParent(true);
+  // fresh address each time so the phone always loads the latest version of the game
+  $("#frame").src = s.game + "?v=" + Date.now(); $("#player").classList.add("show"); tellParent(true);
 }
 function openPage() {
   const f = CONFIG.finalPage;

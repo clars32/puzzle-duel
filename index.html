@@ -87,7 +87,8 @@ if (!key) {
     if (hunt || !huntDue()) return;
     hunt = document.createElement('iframe');
     hunt.title = 'Alysson\'s Adventure';
-    hunt.src = 'hunt/index.html';
+    // A fresh address every time, so phones never show an old cached copy of the hunt.
+    hunt.src = 'hunt/index.html?v=' + Date.now();
     views.appendChild(hunt);
     document.body.classList.add('hunt-on');
     document.getElementById('tabHunt').onclick = () => show('hunt');
